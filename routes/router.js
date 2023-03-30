@@ -8,8 +8,11 @@ const router = require("express").Router();
 router.get("/", async (req, res) => {
   console.log("page hit");
   try {
-    console.log("Test");
-    res.render("index", { message: "This is Awesome!" });
+    const result = await User.find({})
+      .select("first_name last_name email id")
+      .exec();
+    console.log(result);
+    res.render("index", { allUsers: result });
   } catch (ex) {
     res.render("error", { message: "Error" });
     console.log("Error");
@@ -44,6 +47,28 @@ router.get("/populateData", async (req, res) => {
     //user.id contains the newly created user's id
     console.log(user.id);
     res.redirect("/");
+  } catch (ex) {
+    res.render("error", { message: "Error" });
+    console.log("Error");
+    console.log(ex);
+  }
+});
+
+router.get("/showPets", async (req, res) => {
+  console.log("page hit");
+  try {
+    const schema = Joi.string().max(25).required();
+    const validationResult = schema.validate(req.query.id);
+    if (validationResult.error != null) {
+      console.log(validationResult.error);
+      throw validationResult.error;
+    }
+    const userResult = await User.findOne({ _id: req.query.id })
+      .select("first_name id name ")
+      .populate("pets")
+      .exec();
+    console.log(userResult);
+    res.render("pet", { userAndPets: userResult });
   } catch (ex) {
     res.render("error", { message: "Error" });
     console.log("Error");
